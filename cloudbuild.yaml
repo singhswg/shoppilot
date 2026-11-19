@@ -77,7 +77,7 @@ steps:
         SERVICE_URL=$(gcloud run services describe ${_SERVICE_NAME} --region=${_REGION} --format='value(status.url)')
         ID_TOKEN=$(gcloud auth print-identity-token)
         echo "Smoke testing ${SERVICE_URL}..."
-        curl -fsS -H "Authorization: Bearer ${ID_TOKEN}" "${SERVICE_URL}/healthz"
+        curl -fsS -H "Authorization: Bearer ${ID_TOKEN}" "${SERVICE_URL}/readyz"
         curl -fsS -H "Authorization: Bearer ${ID_TOKEN}" "${SERVICE_URL}/.well-known/agent-card.json" | grep -q "ShopPilot"
         echo "Smoke test passed!"
 

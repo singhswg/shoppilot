@@ -41,7 +41,7 @@ gcloud run services update "${SERVICE_NAME}" \
 
 echo "==> Running post-deploy smoke tests..."
 ID_TOKEN="$(gcloud auth print-identity-token)"
-curl -fsS -H "Authorization: Bearer ${ID_TOKEN}" "${SERVICE_URL}/healthz"
+curl -fsS -H "Authorization: Bearer ${ID_TOKEN}" "${SERVICE_URL}/readyz"
 echo ""
 curl -fsS -H "Authorization: Bearer ${ID_TOKEN}" "${SERVICE_URL}/.well-known/agent-card.json" | head -c 400
 echo ""

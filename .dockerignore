@@ -17,5 +17,4 @@ htmlcov
 *.sqlite*
 tests
 evals
-README.md
 Makefile
