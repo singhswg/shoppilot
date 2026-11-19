@@ -1,5 +1,6 @@
-"""ShopPilot ADK tools for deal discovery, pricing intelligence, coupons, and stateful planning."""
+"""ShopPilot ADK tools for deal discovery, pricing intelligence, coupons, HITL checkout, and state."""
 
+from shoppilot.tools.checkout_tools import place_holiday_order
 from shoppilot.tools.coupon_tools import calculate_stacked_savings, find_coupons_and_cashback
 from shoppilot.tools.deal_tools import (
     check_price_history_and_buy_timing,
@@ -12,6 +13,7 @@ from shoppilot.tools.memory_state_tools import (
     manage_budget_and_gift_plan,
     manage_shopping_watchlist,
     manage_user_preferences,
+    requires_budget_confirmation,
 )
 
 __all__ = [
@@ -24,5 +26,7 @@ __all__ = [
     "manage_budget_and_gift_plan",
     "manage_shopping_watchlist",
     "manage_user_preferences",
+    "place_holiday_order",
+    "requires_budget_confirmation",
     "search_holiday_deals",
 ]

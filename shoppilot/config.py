@@ -59,10 +59,15 @@ class Settings(BaseSettings):
     enable_console_trace: bool = Field(default=False)
     log_level: str = Field(default="INFO")
 
-    # Guardrail limits
+    # Guardrail & Human-in-the-Loop (HITL) limits
     max_query_length: int = Field(default=300, ge=10, le=2000)
     max_budget_usd: float = Field(default=50000.0, gt=0)
     max_watchlist_items: int = Field(default=50, ge=1, le=200)
+    hitl_approval_threshold_usd: float = Field(
+        default=250.0,
+        ge=0,
+        description="Purchases at or above this amount require explicit human confirmation.",
+    )
 
     @property
     def allowed_origins_list(self) -> list[str]:

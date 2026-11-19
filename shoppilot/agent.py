@@ -17,7 +17,7 @@ Architecture:
 from __future__ import annotations
 
 from google.adk.agents import LlmAgent, LoopAgent, ParallelAgent, SequentialAgent
-from google.adk.tools import load_memory
+from google.adk.tools import FunctionTool, load_memory
 
 from shoppilot.config import get_settings
 from shoppilot.observability.callbacks import (
@@ -37,6 +37,8 @@ from shoppilot.tools import (
     manage_budget_and_gift_plan,
     manage_shopping_watchlist,
     manage_user_preferences,
+    place_holiday_order,
+    requires_budget_confirmation,
     search_holiday_deals,
 )
 
@@ -150,28 +152,40 @@ def build_root_agent() -> LlmAgent:
     )
 
     # -------------------------------------------------------------------------
-    # Branch 2: Stateful Gift List, Watchlist, Preferences & Budget Planner
+    # Branch 2: Stateful Gift List, Watchlist, Preferences, Budget & HITL Checkout
     # -------------------------------------------------------------------------
+    hitl_order_tool = FunctionTool(
+        place_holiday_order,
+        require_confirmation=True,
+    )
+    hitl_budget_tool = FunctionTool(
+        manage_budget_and_gift_plan,
+        require_confirmation=requires_budget_confirmation,
+    )
+
     gift_budget_planner = LlmAgent(
         name="gift_budget_planner",
         model=fast_model,
         description=(
             "Manages persistent user preferences, holiday budgets, per-recipient allocations, "
-            "shopping watchlists, and price-drop alerts."
+            "shopping watchlists, price-drop alerts, and Human-in-the-Loop confirmed order placement."
         ),
         instruction=(
-            "You are the Gift & Budget Planner for ShopPilot. "
+            "You are the Gift, Budget & Checkout Planner for ShopPilot. "
             "Help users save their memberships/preferred retailers (`manage_user_preferences`), "
             "set or review their total and per-recipient holiday budgets (`manage_budget_and_gift_plan`), "
-            "manage their tracked gift watchlist (`manage_shopping_watchlist`), and create price-drop alerts "
-            "(`create_price_drop_alert`). Use `load_memory` when the user references past conversations or "
-            "previously discussed gift recipients. Always confirm saved changes clearly."
+            "manage their tracked gift watchlist (`manage_shopping_watchlist`), create price-drop alerts "
+            "(`create_price_drop_alert`), and place holiday orders (`place_holiday_order`). "
+            "IMPORTANT: High-stakes actions (placing an order, recording purchases >= $250 or over budget, "
+            "or setting budgets >= $1,000) enforce explicit Human-in-the-Loop (HITL) confirmation—never "
+            "bypass or assume approval. Use `load_memory` when the user references past conversations."
         ),
         tools=[
             manage_user_preferences,
             manage_shopping_watchlist,
-            manage_budget_and_gift_plan,
+            hitl_budget_tool,
             create_price_drop_alert,
+            hitl_order_tool,
             load_memory,
         ],
         before_model_callback=before_model_callback,

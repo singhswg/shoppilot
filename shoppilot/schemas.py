@@ -101,7 +101,7 @@ class PriceAlertRule(BaseModel):
 class ToolResponse(BaseModel):
     """Uniform envelope returned by all ShopPilot tools."""
 
-    status: Literal["success", "error", "not_found"]
+    status: Literal["success", "error", "not_found", "pending_confirmation", "cancelled"]
     data: dict[str, Any] = Field(default_factory=dict)
     error: str | None = None
     metadata: dict[str, Any] = Field(default_factory=dict)

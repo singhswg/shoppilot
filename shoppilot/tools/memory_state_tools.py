@@ -13,8 +13,29 @@ from typing import Any
 from google.adk.tools.tool_context import ToolContext
 
 from shoppilot.config import get_settings
+from shoppilot.observability.telemetry import get_metrics
 from shoppilot.schemas import PriceAlertRule, ToolResponse, WatchlistItem
 from shoppilot.tools.deal_tools import _best_offer, _resolve_product
+
+
+def requires_budget_confirmation(
+    action: str = "",
+    total_budget_usd: float | None = None,
+    record_spend_usd: float | None = None,
+    **_kwargs: Any,
+) -> bool:
+    """Conditional ADK HITL predicate for high-stakes budget/spend mutations.
+
+    Triggers explicit human confirmation when recording a purchase at or above
+    `hitl_approval_threshold_usd` (default $250) or setting a total budget >= $1,000.
+    """
+    settings = get_settings()
+    act = action.strip().lower()
+    if act == "record_purchase" and record_spend_usd is not None:
+        return record_spend_usd >= settings.hitl_approval_threshold_usd
+    if act == "set_total_budget" and total_budget_usd is not None:
+        return total_budget_usd >= 1000.0
+    return False
 
 
 def manage_user_preferences(
@@ -245,8 +266,52 @@ def manage_budget_and_gift_plan(
             return ToolResponse(
                 status="error", error="record_spend_usd must be positive."
             ).model_dump()
+
+        total_cap = float(budget["total_budget_usd"])
+        projected_spent = round(float(budget["spent_usd"]) + record_spend_usd, 2)
+        would_exceed = bool(total_cap > 0 and projected_spent > total_cap)
+        needs_hitl = record_spend_usd >= settings.hitl_approval_threshold_usd or would_exceed
+
+        if needs_hitl:
+            confirmation = getattr(tool_context, "tool_confirmation", None)
+            if confirmation is None:
+                get_metrics().inc("hitl_confirmations_requested")
+                reason = (
+                    f"exceeds total holiday budget (${projected_spent:.2f} / ${total_cap:.2f})"
+                    if would_exceed
+                    else f"at or above ${settings.hitl_approval_threshold_usd:.2f} approval threshold"
+                )
+                hint = (
+                    f"Confirm recording ${record_spend_usd:.2f} purchase for "
+                    f"{recipient.strip() or 'Self'} ({reason})?"
+                )
+                tool_context.request_confirmation(
+                    hint=hint,
+                    payload={
+                        "action": "record_purchase",
+                        "recipient": recipient.strip() or "Self",
+                        "record_spend_usd": round(record_spend_usd, 2),
+                        "projected_spent_usd": projected_spent,
+                        "total_budget_usd": total_cap,
+                        "would_exceed_budget": would_exceed,
+                    },
+                )
+                return ToolResponse(
+                    status="pending_confirmation",
+                    data={"message": "Human confirmation required.", "hint": hint},
+                    metadata={"hitl_required": True},
+                ).model_dump()
+            if not confirmation.confirmed:
+                get_metrics().inc("hitl_confirmations_rejected")
+                return ToolResponse(
+                    status="cancelled",
+                    data={"message": "Purchase recording cancelled by user."},
+                    metadata={"hitl_confirmed": False},
+                ).model_dump()
+            get_metrics().inc("hitl_confirmations_approved")
+
         rec_key = recipient.strip() or "Self"
-        budget["spent_usd"] = round(float(budget["spent_usd"]) + record_spend_usd, 2)
+        budget["spent_usd"] = projected_spent
         existing = budget["recipients"].get(rec_key, {"allocated_usd": 0.0, "spent_usd": 0.0})
         existing["spent_usd"] = round(float(existing["spent_usd"]) + record_spend_usd, 2)
         budget["recipients"][rec_key] = existing

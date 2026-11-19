@@ -187,15 +187,27 @@ def after_model_callback(
     return None
 
 
+_HIGH_STAKES_TOOLS = {"place_holiday_order"}
+
+
 def before_tool_callback(
     tool: BaseTool,
     args: dict[str, Any],
     tool_context: ToolContext,
 ) -> dict[str, Any] | None:
-    """Start tool telemetry timer and log sanitized tool invocation."""
+    """Start tool telemetry timer, audit HITL status, and log sanitized tool invocation."""
     metrics = get_metrics()
     metrics.inc(f"tool_calls.{tool.name}")
     tool_context.state[f"temp:tool_start_{tool.name}"] = time.perf_counter()
+
+    confirmation = getattr(tool_context, "tool_confirmation", None)
+    hitl_status = (
+        "pending"
+        if confirmation is None
+        else ("approved" if confirmation.confirmed else "rejected")
+    )
+    if tool.name in _HIGH_STAKES_TOOLS:
+        metrics.inc(f"hitl_tool_invocations.{tool.name}")
 
     logger.info(
         "Invoking tool",
@@ -204,6 +216,8 @@ def before_tool_callback(
                 "event": "tool_start",
                 "tool_name": tool.name,
                 "args": args,
+                "high_stakes": tool.name in _HIGH_STAKES_TOOLS,
+                "hitl_status": hitl_status,
             }
         },
     )

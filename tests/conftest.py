@@ -18,11 +18,24 @@ class DummyActions:
 
 
 @dataclass
+class DummyToolConfirmation:
+    """Minimal stand-in for ADK ToolConfirmation."""
+
+    confirmed: bool
+    payload: Any = None
+
+
+@dataclass
 class DummyToolContext:
-    """Minimal stand-in for ADK ToolContext supporting scoped state and actions."""
+    """Minimal stand-in for ADK ToolContext supporting scoped state, actions, and HITL."""
 
     state: dict[str, Any] = field(default_factory=dict)
     actions: DummyActions = field(default_factory=DummyActions)
+    tool_confirmation: DummyToolConfirmation | None = None
+    confirmation_requests: list[dict[str, Any]] = field(default_factory=list)
+
+    def request_confirmation(self, *, hint: str | None = None, payload: Any | None = None) -> None:
+        self.confirmation_requests.append({"hint": hint, "payload": payload})
 
 
 @dataclass
