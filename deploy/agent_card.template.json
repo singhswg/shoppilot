@@ -1,0 +1,63 @@
+{
+  "name": "ShopPilot Holiday Shopping Assistant",
+  "description": "Automated holiday shopping assistant built with Google ADK. Discovers verified multi-retailer deals, detects inflated fake holiday discounts using 90-day price history, stacks coupons and cashback rewards, and manages holiday gift budgets & watchlists.",
+  "version": "1.0.0",
+  "supportedInterfaces": [
+    {
+      "url": "${SERVICE_URL}/a2a",
+      "protocolBinding": "JSONRPC",
+      "protocolVersion": "1.0"
+    }
+  ],
+  "provider": {
+    "organization": "ShopPilot",
+    "url": "${SERVICE_URL}"
+  },
+  "capabilities": {
+    "streaming": true,
+    "pushNotifications": false
+  },
+  "defaultInputModes": ["text/plain"],
+  "defaultOutputModes": ["text/plain"],
+  "skills": [
+    {
+      "id": "holiday_deal_discovery",
+      "name": "Holiday Deal Discovery & Price Comparison",
+      "description": "Searches across major retailers, computes total landed costs, and ranks offers by authenticity-adjusted deal score.",
+      "tags": ["shopping", "holiday-deals", "price-comparison", "retail"],
+      "examples": [
+        "Find the best holiday deals on noise-canceling headphones under $300.",
+        "Compare prices for the LG 65-inch C4 OLED TV across Costco, Best Buy, and Amazon."
+      ]
+    },
+    {
+      "id": "fake_deal_detection_and_buy_timing",
+      "name": "Fake Deal Detection & Buy-Timing Advisor",
+      "description": "Audits 90-day price history and past Black Friday lows to detect artificially inflated MSRP sales and issue BUY_NOW, WAIT, SET_ALERT, or AVOID_FAKE_DEAL verdicts.",
+      "tags": ["price-history", "black-friday", "cyber-monday", "fraud-detection"],
+      "examples": [
+        "Is the UltraChef Smart Air Fryer Pro a real holiday deal or a fake markup?",
+        "Should I buy the Sony WH-1000XM5 now or wait for Black Friday?"
+      ]
+    },
+    {
+      "id": "coupon_and_cashback_stacking",
+      "name": "Coupon & Cashback Stacking Calculator",
+      "description": "Finds active holiday promo codes, cashback portals, and credit card multipliers to calculate effective net price.",
+      "tags": ["coupons", "cashback", "promo-codes", "savings"],
+      "examples": [
+        "What coupons and cashback can I stack on a $280 Best Buy order?"
+      ]
+    },
+    {
+      "id": "gift_budget_and_watchlist_planner",
+      "name": "Gift Budget, Watchlist & Multi-Gift Bundle Optimizer",
+      "description": "Persists user memberships, holiday budgets, per-recipient allocations, watchlists, price-drop alerts, and optimizes multi-recipient gift bundles under a strict budget.",
+      "tags": ["budget", "gift-list", "watchlist", "price-alerts", "planning"],
+      "examples": [
+        "Set my holiday budget to $600 and add Sony WH-1000XM5 for my sister with a $280 target.",
+        "Plan a holiday gift bundle for Mom, Dad, and my nephew under $300 total."
+      ]
+    }
+  ]
+}

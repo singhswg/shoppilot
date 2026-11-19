@@ -1,0 +1,125 @@
+{
+  "eval_set_id": "shoppilot_holiday_deals_evalset",
+  "name": "ShopPilot Holiday Shopping Evaluation Suite",
+  "description": "Evaluates tool trajectory accuracy, fake-deal detection, coupon stacking, and stateful budget/watchlist management.",
+  "eval_cases": [
+    {
+      "eval_id": "case_01_headphones_deal_discovery",
+      "conversation": [
+        {
+          "invocation_id": "inv_01",
+          "user_content": {
+            "parts": [
+              {
+                "text": "Find the best holiday deal on Sony WH-1000XM5 headphones and tell me if I should buy now."
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "text": "The Sony WH-1000XM5 is at its all-time low of $279.99 at Best Buy (down from $399.99 list and $349.00 90-day average). Recommendation: BUY_NOW. You can stack HOLIDAY10 (10% off) and 4% Rakuten cashback for an even lower effective net price."
+              }
+            ],
+            "role": "model"
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "search_holiday_deals",
+                "args": {
+                  "query": "Sony WH-1000XM5"
+                }
+              },
+              {
+                "name": "check_price_history_and_buy_timing",
+                "args": {
+                  "product_id_or_name": "sony-wh1000xm5"
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "eval_id": "case_02_fake_holiday_deal_detection",
+      "conversation": [
+        {
+          "invocation_id": "inv_02",
+          "user_content": {
+            "parts": [
+              {
+                "text": "Is the UltraChef Smart Air Fryer Pro actually a good holiday deal right now?"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "text": "AVOID_FAKE_DEAL: Although the UltraChef Smart Air Fryer Pro is advertised at $119.99 off a $199.99 list price, its 90-day average price is $89.99 and its all-time low is $69.99. This is an inflated fake holiday sale."
+              }
+            ],
+            "role": "model"
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "check_price_history_and_buy_timing",
+                "args": {
+                  "product_id_or_name": "generic-smart-air-fryer-pro"
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "eval_id": "case_03_stateful_budget_and_watchlist",
+      "conversation": [
+        {
+          "invocation_id": "inv_03",
+          "user_content": {
+            "parts": [
+              {
+                "text": "Set my holiday budget to $500 and add the LEGO Star Wars Millennium Falcon to my watchlist for my nephew with a target price of $68."
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "text": "Your holiday budget is set to $500.00, and the LEGO Star Wars Millennium Falcon 25th Anniversary Set has been added to your watchlist for your nephew with a $68.00 target price (target already met at $67.99 at Target and Amazon)."
+              }
+            ],
+            "role": "model"
+          },
+          "intermediate_data": {
+            "tool_uses": [
+              {
+                "name": "manage_budget_and_gift_plan",
+                "args": {
+                  "action": "set_total_budget",
+                  "total_budget_usd": 500
+                }
+              },
+              {
+                "name": "manage_shopping_watchlist",
+                "args": {
+                  "action": "add",
+                  "product_id_or_name": "lego-star-wars-millennium-falcon",
+                  "target_price_usd": 68,
+                  "recipient": "nephew"
+                }
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

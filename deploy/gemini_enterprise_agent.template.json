@@ -1,0 +1,10 @@
+{
+  "displayName": "ShopPilot Holiday Shopping Assistant",
+  "description": "Automated holiday shopping assistant that finds genuine deals, flags fake holiday markups, stacks coupons & cashback, and tracks gift budgets.",
+  "a2aAgentDefinition": {
+    "jsonAgentCard": "${AGENT_CARD_JSON_ESCAPED}"
+  },
+  "sharingConfig": {
+    "scope": "ALL_USERS"
+  }
+}

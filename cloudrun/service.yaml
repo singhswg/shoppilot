@@ -1,0 +1,67 @@
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: shoppilot
+  labels:
+    app: shoppilot
+    component: adk-a2a-agent
+  annotations:
+    run.googleapis.com/ingress: all
+    run.googleapis.com/description: "ShopPilot Automated Holiday Shopping Assistant (ADK + A2A)"
+spec:
+  template:
+    metadata:
+      annotations:
+        autoscaling.knative.dev/minScale: "0"
+        autoscaling.knative.dev/maxScale: "10"
+        run.googleapis.com/cpu-throttling: "false"
+        run.googleapis.com/startup-cpu-boost: "true"
+    spec:
+      serviceAccountName: shoppilot-sa@PROJECT_ID.iam.gserviceaccount.com
+      containerConcurrency: 40
+      timeoutSeconds: 180
+      containers:
+        - image: REGION-docker.pkg.dev/PROJECT_ID/shoppilot/shoppilot:latest
+          ports:
+            - name: http1
+              containerPort: 8080
+          resources:
+            limits:
+              cpu: "2"
+              memory: 1Gi
+          env:
+            - name: APP_ENV
+              value: production
+            - name: GOOGLE_GENAI_USE_VERTEXAI
+              value: "TRUE"
+            - name: GOOGLE_CLOUD_PROJECT
+              value: PROJECT_ID
+            - name: GOOGLE_CLOUD_LOCATION
+              value: us-central1
+            - name: SHOPPILOT_MODEL
+              value: gemini-2.5-flash
+            - name: SHOPPILOT_COMPLEX_MODEL
+              value: gemini-2.5-pro
+            - name: ENABLE_CLOUD_TRACE
+              value: "true"
+            - name: REQUIRE_AUTH
+              value: "true"
+            - name: SESSION_SERVICE_URI
+              value: memory
+            - name: MEMORY_SERVICE_TYPE
+              value: memory
+            - name: PUBLIC_BASE_URL
+              value: https://shoppilot-HASH-uc.a.run.app
+          startupProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            failureThreshold: 6
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            periodSeconds: 30
+            timeoutSeconds: 5
