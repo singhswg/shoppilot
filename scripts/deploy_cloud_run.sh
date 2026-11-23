@@ -24,7 +24,7 @@ gcloud run deploy "${SERVICE_NAME}" \
   --max-instances=10 \
   --memory=1Gi \
   --cpu=2 \
-  --set-env-vars="APP_ENV=production,GOOGLE_GENAI_USE_VERTEXAI=TRUE,GOOGLE_CLOUD_PROJECT=${PROJECT_ID},GOOGLE_CLOUD_LOCATION=${REGION},ENABLE_CLOUD_TRACE=true,REQUIRE_AUTH=true" \
+  --set-env-vars="APP_ENV=production,GOOGLE_GENAI_USE_VERTEXAI=TRUE,GOOGLE_CLOUD_PROJECT=${PROJECT_ID},GOOGLE_CLOUD_LOCATION=${REGION},ENABLE_CLOUD_TRACE=true,REQUIRE_AUTH=false" \
   --project="${PROJECT_ID}"
 
 SERVICE_URL="$(gcloud run services describe "${SERVICE_NAME}" \

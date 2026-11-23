@@ -32,11 +32,11 @@ class Settings(BaseSettings):
     # Google Cloud / Vertex AI
     google_genai_use_vertexai: bool = Field(default=True)
     google_cloud_project: str = Field(default="")
-    google_cloud_location: str = Field(default="us-central1")
+    google_cloud_location: str = Field(default="global")
 
-    # Model selection (fast model for parallel scouts, pro model for synthesis/routing)
-    shoppilot_model: str = Field(default="gemini-2.5-flash")
-    shoppilot_complex_model: str = Field(default="gemini-2.5-pro")
+    # Model selection (fast model for parallel scouts, complex model for synthesis/routing)
+    shoppilot_model: str = Field(default="gemini-3-flash-preview")
+    shoppilot_complex_model: str = Field(default="gemini-3-flash-preview")
 
     # HTTP / A2A server configuration
     host: str = Field(default="127.0.0.1")

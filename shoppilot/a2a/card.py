@@ -31,7 +31,7 @@ def build_agent_card(settings: Settings | None = None) -> AgentCard:
         version=cfg.service_version,
         supported_interfaces=[
             AgentInterface(
-                url=f"{base_url}/a2a",
+                url=f"{base_url}/a2a/",
                 protocol_binding="JSONRPC",
                 protocol_version="1.0",
             )
@@ -104,5 +104,14 @@ def build_agent_card(settings: Settings | None = None) -> AgentCard:
 
 
 def agent_card_to_dict(card: AgentCard) -> dict[str, Any]:
-    """Serialize an A2A protobuf AgentCard to standard camelCase JSON dict."""
-    return dict(MessageToDict(card, preserving_proto_field_name=False))
+    """Serialize an A2A protobuf AgentCard to camelCase JSON dict.
+
+    Includes top-level `url` and `protocolVersion` (A2A v0.3) alongside v1.0
+    `supportedInterfaces` for full Gemini Enterprise & Agent Registry compatibility.
+    """
+    data = dict(MessageToDict(card, preserving_proto_field_name=False))
+    interfaces = data.get("supportedInterfaces")
+    if isinstance(interfaces, list) and interfaces and "url" not in data:
+        data["url"] = interfaces[0].get("url", "")
+    data.setdefault("protocolVersion", "0.3.0")
+    return data

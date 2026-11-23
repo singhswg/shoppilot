@@ -14,30 +14,39 @@ def test_health_ready_metrics_and_agent_card_endpoints():
         require_auth=False,
         public_base_url="http://127.0.0.1:8080",
     )
-    client = TestClient(create_app(cfg))
+    with TestClient(create_app(cfg)) as client:
+        health = client.get("/healthz")
+        assert health.status_code == 200
+        assert health.json()["status"] == "ok"
+        assert health.headers["X-Content-Type-Options"] == "nosniff"
+        assert health.headers["X-Frame-Options"] == "DENY"
+        assert "default-src 'none'" in health.headers["Content-Security-Policy"]
 
-    health = client.get("/healthz")
-    assert health.status_code == 200
-    assert health.json()["status"] == "ok"
-    assert health.headers["X-Content-Type-Options"] == "nosniff"
-    assert health.headers["X-Frame-Options"] == "DENY"
-    assert "default-src 'none'" in health.headers["Content-Security-Policy"]
+        ready = client.get("/readyz")
+        assert ready.status_code == 200
+        assert ready.json()["agent"] == "shoppilot"
+        assert "deal_discovery_pipeline" in ready.json()["sub_agents"]
 
-    ready = client.get("/readyz")
-    assert ready.status_code == 200
-    assert ready.json()["agent"] == "shoppilot"
-    assert "deal_discovery_pipeline" in ready.json()["sub_agents"]
+        card = client.get("/.well-known/agent-card.json")
+        assert card.status_code == 200
+        body = card.json()
+        assert body["name"] == "ShopPilot Holiday Shopping Assistant"
+        assert body["url"] == "http://127.0.0.1:8080/a2a/"
+        assert body["protocolVersion"] == "0.3.0"
+        assert body["supportedInterfaces"][0]["url"] == "http://127.0.0.1:8080/a2a/"
+        assert len(body["skills"]) == 4
 
-    card = client.get("/.well-known/agent-card.json")
-    assert card.status_code == 200
-    body = card.json()
-    assert body["name"] == "ShopPilot Holiday Shopping Assistant"
-    assert body["supportedInterfaces"][0]["url"] == "http://127.0.0.1:8080/a2a"
-    assert len(body["skills"]) == 4
+        # Verify mounted A2A JSON-RPC route is actually registered via lifespan (not 404)
+        a2a_probe = client.post(
+            "/a2a/",
+            json={"jsonrpc": "2.0", "id": "1", "method": "tasks/get", "params": {"id": "missing"}},
+        )
+        assert a2a_probe.status_code == 200
+        assert a2a_probe.json()["jsonrpc"] == "2.0"
 
-    metrics = client.get("/metrics")
-    assert metrics.status_code == 200
-    assert metrics.json()["counters"]["http_requests_total"] >= 3
+        metrics = client.get("/metrics")
+        assert metrics.status_code == 200
+        assert metrics.json()["counters"]["http_requests_total"] >= 4
 
 
 def test_auth_enforcement_when_require_auth_enabled():

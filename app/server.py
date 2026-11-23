@@ -18,6 +18,8 @@ from __future__ import annotations
 import hmac
 import time
 from collections import defaultdict, deque
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 from typing import Any
 
 from fastapi import FastAPI, Request, Response
@@ -65,11 +67,27 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     agent_card = build_agent_card(cfg)
     rate_limiter = SlidingWindowRateLimiter(cfg.rate_limit_requests_per_minute)
 
+    # Create ADK A2A ASGI sub-app first so its lifespan can be run by the parent FastAPI app.
+    # FastAPI does not automatically run lifespans of mounted sub-apps, and `to_a2a` registers
+    # its JSON-RPC routes inside its Starlette lifespan startup hook.
+    a2a_asgi_app = to_a2a(
+        root_agent,
+        host=cfg.host,
+        port=cfg.port,
+        agent_card=agent_card,
+    )
+
+    @asynccontextmanager
+    async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
+        async with a2a_asgi_app.router.lifespan_context(a2a_asgi_app):
+            yield
+
     application = FastAPI(
         title="ShopPilot Holiday Shopping Assistant",
         version=cfg.service_version,
         docs_url=None if cfg.app_env == "production" else "/docs",
         redoc_url=None,
+        lifespan=lifespan,
     )
 
     # Strict CORS allow-list (no wildcard '*')
@@ -159,13 +177,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         """Serve the canonical A2A Agent Card for Agent Registry & Gemini Enterprise discovery."""
         return agent_card_to_dict(agent_card)
 
-    # Mount ADK's A2A ASGI application at /a2a
-    a2a_asgi_app = to_a2a(
-        root_agent,
-        host=cfg.host,
-        port=cfg.port,
-        agent_card=agent_card,
-    )
+    # Mount ADK's A2A ASGI application at /a2a (lifespan is managed by parent FastAPI app)
     application.mount("/a2a", a2a_asgi_app)
 
     # Instrument FastAPI with OpenTelemetry for automatic HTTP + W3C traceparent spans

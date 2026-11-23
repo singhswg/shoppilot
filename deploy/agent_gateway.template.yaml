@@ -1,0 +1,10 @@
+# Declarative Google Cloud Agent Gateway configuration (Network Services API)
+# Uses numeric PROJECT_NUMBER for Agent Registry URIs (max 2: 1 global + 1 regional).
+name: projects/${PROJECT_NUMBER}/locations/${REGION}/agentGateways/${GATEWAY_ID}
+description: "Project-level Agent Gateway for Agent Registry governance"
+protocols:
+  - MCP
+googleManaged:
+  governedAccessPath: AGENT_TO_ANYWHERE
+registries:
+  - "//agentregistry.googleapis.com/projects/${PROJECT_NUMBER}/locations/global"

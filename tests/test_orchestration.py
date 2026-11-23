@@ -48,7 +48,7 @@ def test_a2a_agent_card_metadata_and_skills():
     cfg = Settings(public_base_url="https://shoppilot-demo.a.run.app")
     card = build_agent_card(cfg)
     assert card.name == "ShopPilot Holiday Shopping Assistant"
-    assert card.supported_interfaces[0].url == "https://shoppilot-demo.a.run.app/a2a"
+    assert card.supported_interfaces[0].url == "https://shoppilot-demo.a.run.app/a2a/"
     assert card.capabilities.streaming is True
     skill_ids = {s.id for s in card.skills}
     assert skill_ids == {

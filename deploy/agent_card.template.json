@@ -2,6 +2,8 @@
   "name": "ShopPilot Holiday Shopping Assistant",
   "description": "Automated holiday shopping assistant built with Google ADK. Discovers verified multi-retailer deals, detects inflated fake holiday discounts using 90-day price history, stacks coupons and cashback rewards, and manages holiday gift budgets & watchlists.",
   "version": "1.0.0",
+  "protocolVersion": "0.3.0",
+  "url": "${SERVICE_URL}/a2a",
   "supportedInterfaces": [
     {
       "url": "${SERVICE_URL}/a2a",
